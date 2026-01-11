@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>イナイレヴィクトリーロード 必殺技リスト</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <style>
+        body { font-family: "Helvetica Neue", Arial, sans-serif; margin: 20px; background-color: #f0f2f5; color: #333; }
+        .container { max-width: 1350px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #003366; margin-bottom: 25px; }
+        
+        /* フィルターエリアのデザイン */
+        .filter-area { background: #e9ecef; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 25px; flex-wrap: wrap; align-items: center; }
+        .filter-group { display: flex; align-items: center; gap: 8px; }
+        .sub-filter-group { display: none; } /* 初期は非表示 */
+        select { padding: 8px; border-radius: 5px; border: 1px solid #ccc; background: white; }
+
+        /* 属性別カラー */
+        .attr-火 { color: #d90429; font-weight: bold; }
+        .attr-林 { color: #2b9348; font-weight: bold; }
+        .attr-風 { color: #00b4d8; font-weight: bold; }
+        .attr-山 { color: #99582a; font-weight: bold; }
+        .attr-無 { color: #6c757d; font-weight: bold; }
+
+        /* 特殊ラベル (C/L) */
+        .label-c { background: #ff4d4d; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; margin-right: 5px; font-weight: bold; }
+        .label-l { background: #4d79ff; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; margin-right: 5px; font-weight: bold; }
+
+        table.dataTable thead th { background-color: #003366; color: white; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>⚡ イナイレヴィクトリーロード 必殺技リスト</h1>
+
+    <div class="filter-area">
+        <div class="filter-group">
+            <strong>種類:</strong>
+            <select id="typeFilter">
+                <option value="">すべて</option>
+                <option value="シュート">シュート</option>
+                <option value="ドリブル">ドリブル</option>
+                <option value="ブロック">ブロック</option>
+                <option value="キーパー">キーパー</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <strong>属性:</strong>
+            <select id="attrFilter">
+                <option value="">すべて</option>
+                <option value="火">火</option>
+                <option value="林">林</option>
+                <option value="風">風</option>
+                <option value="山">山</option>
+                <option value="無">無</option>
+            </select>
+        </div>
+
+        <div id="subFilterGroup" class="filter-group sub-filter-group">
+            <strong>詳細条件:</strong>
+            <select id="subTypeFilter">
+                <option value="">-</option>
+            </select>
+        </div>
+    </div>
+
+    <table id="masterTable" class="display" style="width:100%">
+        <thead>
+            <tr>
+                <th>技名</th>
+                <th>種類</th>
+                <th>属性</th>
+                <th>テンション</th>
+                <th>AT</th>
+                <th>入手方法</th>
+                <th>必要材料</th>
+                <th>動画</th>
+                <th style="display:none;">subType</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+    <div id="video-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center;">
+        <div style="position:relative; width:80%; max-width:800px;">
+          <span id="close-modal" style="position:absolute; top:-40px; right:0; color:white; font-size:30px; cursor:pointer;">&times; 閉じる</span>
+          <video id="modal-player" controls width="100%" src=""></video>
+      </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="data.js"></script>
+
+<script>
+$(document).ready(function() {
+    const tableBody = $('#tableBody');
+    const modal = $('#video-modal');
+    const modalPlayer = $('#modal-player')[0]; // HTMLVideoElementとして取得
+    const closeModal = $('#close-modal');
+    
+    // 1. テーブル生成部分の修正
+    allSkills.forEach(skill => {
+        let nameHtml = skill.name;
+        if(skill.name.startsWith('C ')) {
+            nameHtml = `<span class="label-c">C</span>${skill.name.replace('C ', '')}`;
+        } else if(skill.name.startsWith('L ')) {
+            nameHtml = `<span class="label-l">L</span>${skill.name.replace('L ', '')}`;
+        }
+
+        // 動画ボタンの生成
+        const videoBtn = skill.videoUrl 
+            ? `<button class="play-btn" data-url="${skill.videoUrl}" style="cursor:pointer; padding: 2px 8px;">再生</button>` 
+            : "-";
+
+        tableBody.append(`
+            <tr>
+                <td>${nameHtml}</td>
+                <td>${skill.type}</td>
+                <td class="attr-${skill.attr}">${skill.attr}</td>
+                <td>${skill.tension}</td>
+                <td>${skill.at}</td>
+                <td>${skill.get || '-'}</td>
+                <td>${skill.material || '-'}</td>
+                <td>${videoBtn}</td> <td style="display:none;">${skill.subType || ''}</td>
+            </tr>
+        `);
+    });
+
+    // DataTableの初期化（動画列が含まれるため、列インデックスに注意）
+    const table = $('#masterTable').DataTable({
+        language: { url: "https://cdn.datatables.net/plug-ins/1.13.6/i18n/ja.json" },
+        pageLength: 50,
+        order: [[1, "asc"], [4, "desc"]]
+    });
+
+    // 2. 動画再生イベント（デリゲーション）
+    $(document).on('click', '.play-btn', function() {
+        const url = $(this).data('url');
+        modalPlayer.src = url;
+        modal.css('display', 'flex');
+        modalPlayer.play();
+    });
+
+    // 3. 閉じる処理
+    closeModal.on('click', function() {
+        modal.hide();
+        modalPlayer.pause();
+        modalPlayer.src = "";
+    });
+
+    // 背景クリックで閉じる
+    modal.on('click', function(e) {
+        if (e.target === this) closeModal.click();
+    });
+
+    // --- フィルター処理 ---
+    $('#typeFilter').on('change', function() {
+        const val = $(this).val();
+        const subGroup = $('#subFilterGroup');
+        const subSelect = $('#subTypeFilter');
+        
+        // 詳細条件のリセット
+        subSelect.empty().append('<option value="">-</option>');
+        table.column(8).search('').draw(); 
+
+        if (val === 'シュート') {
+            subSelect.append('<option value="カウンター">カウンター</option><option value="ロング">ロング</option>');
+            subGroup.css('display', 'flex').hide().fadeIn();
+        } else if (val === 'ブロック') {
+            subSelect.append('<option value="シュートブロック">シュートブロック</option>');
+            subGroup.css('display', 'flex').hide().fadeIn();
+        } else if (val === 'キーパー') {
+            subSelect.append('<option value="キャッチ">キャッチ</option><option value="パンチ">パンチ</option>');
+            subGroup.css('display', 'flex').hide().fadeIn();
+        } else {
+            // ドリブルなどは詳細条件がないため非表示
+            subGroup.fadeOut();
+        }
+        
+        // 種類（メインカテゴリ）で検索実行
+        table.column(1).search(val).draw();
+    });
+
+    // 詳細条件（subType）が変更された時の処理
+    $('#subTypeFilter').on('change', function() {
+        table.column(8).search(this.value).draw();
+    });
+
+    // 属性フィルター
+    $('#attrFilter').on('change', function() {
+        table.column(2).search(this.value).draw();
+    });
+});
+</script>
+</body>
+</html>
